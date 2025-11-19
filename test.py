@@ -11,11 +11,7 @@ import matplotlib.pyplot as plt
 #   - check_elegibility: O(1)
 # ---> in total: we get O(16n)
 
-"""test = Maze(50)
-test.generate()
-test.display()"""
-
-test2 = Maze(1024)
+test2 = Maze(50)
 test2.generate()
 test2.solve_from_random_coordonnates()
 test2.display_soluce()

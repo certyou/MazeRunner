@@ -117,6 +117,12 @@ class Maze:
 
     def get_size(self):
         return self.size
+    
+    def get_start(self):
+        return self.start
+    
+    def get_goal(self):
+        return self.goal
 
     def display_soluce(self):
         img = Image.fromarray(self.maze)
