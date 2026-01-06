@@ -14,14 +14,14 @@ class Maze:
         self.maze = np.zeros((n, n, 3), dtype=np.uint8)
         self.map = np.full((self.size, self.size), self.size**2, dtype=np.int64)
         self.cardinal = {
-            "north":[-1, 0],
-            "south":[1, 0],
-            "west":[0, -1],
-            "east":[0, 1],
-            "north-east": [-1, 1],
-            "north-west": [-1, -1],
-            "south-east": [1, 1],
-            "south-west": [1, -1]
+            0: [0, 1],
+            1: [-1, 1],
+            2: [-1, 0],
+            3: [-1, -1],
+            4: [0, -1],
+            5: [1, -1],
+            6: [1, 0],
+            7: [1, 1],
         }
         rand_x = rd.randint(0, self.size-1)
         rand_y = rd.randint(0, self.size-1)
@@ -123,6 +123,16 @@ class Maze:
     
     def get_goal(self):
         return self.goal
+    
+    def is_valid(self, postion, move):
+        i = postion[0]+move[0]
+        j = postion[1]+move[1]
+        # move in the maze
+        if (i>=0 and i<self.size) and (j>=0 and j<self.size):
+            # not a wall
+            if self.map[i][j] != -1:
+                return True
+        return False
 
     def display_soluce(self):
         img = Image.fromarray(self.maze)
@@ -131,3 +141,16 @@ class Maze:
     def display_map(self):
         plt.matshow(self.map)
         plt.show()
+
+    def display_runner(self, runner):
+        runner_on_maze = self.maze.copy()
+        cell = list(runner.get_start())
+        path = runner.get_path()
+        for direction in path:
+            if direction >=0:
+                move = self.cardinal[direction]
+                runner_on_maze[cell[0]][cell[1]] = [0,255,0]
+                cell[0] += move[0]
+                cell[1] += move[1]
+        img = Image.fromarray(runner_on_maze)
+        img.show()

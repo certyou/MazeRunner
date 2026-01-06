@@ -1,5 +1,6 @@
 from OldMaze import Maze
 from Maze import Maze
+from GeneticAlgo import GeneticAlgo
 import time
 import matplotlib.pyplot as plt
 
@@ -11,10 +12,10 @@ import matplotlib.pyplot as plt
 #   - check_elegibility: O(1)
 # ---> in total: we get O(16n)
 
-test2 = Maze(50)
+"""test2 = Maze(50)
 test2.generate()
 test2.solve_from_random_coordonnates()
-test2.display_soluce()
+test2.display_soluce()"""
 
 """abscisse = [8, 16, 32, 64, 128, 256, 512]
 ordonnee = []
@@ -28,3 +29,8 @@ for k in abscisse:
     ordonnee.append(stop)
 plt.plot(abscisse, ordonnee, 'ro')
 plt.show()"""
+
+gen = GeneticAlgo(10, 10, 10)
+gen.selection(0.8)
+print(gen)
+gen.display_best_runner()
