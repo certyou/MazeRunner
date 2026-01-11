@@ -21,6 +21,7 @@ class Runner:
             6:[1, 0],
             7: [1, 1],
         }
+        self.path = []
         if not path:
             self.generate()
         else:

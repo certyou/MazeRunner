@@ -152,5 +152,7 @@ class Maze:
                 runner_on_maze[cell[0]][cell[1]] = [0,255,0]
                 cell[0] += move[0]
                 cell[1] += move[1]
+        runner_on_maze[self.goal[0]][self.goal[1]] = [255,0,0]
+        runner_on_maze[self.start[0]][self.start[1]] = [0,0,255]
         img = Image.fromarray(runner_on_maze)
         img.show()
