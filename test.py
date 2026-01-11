@@ -30,7 +30,9 @@ for k in abscisse:
 plt.plot(abscisse, ordonnee, 'ro')
 plt.show()"""
 
-gen = GeneticAlgo(10, 10, 10)
-gen.selection(0.8)
-print(gen)
-gen.display_best_runner()
+gen = GeneticAlgo(maze_size=10, pop_size=100, runner_length=20)
+gen.evolve(generations=50000)
+best_runner = gen.get_best_runner()
+print("Best runner path:", best_runner.get_path())
+gen.maze.display_runner(best_runner)
+gen.maze.display_soluce()

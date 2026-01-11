@@ -5,11 +5,12 @@ import math
 import time
 
 # parameters
-mutation_rate = 0.1
-selection_rate = 0.2
+mutation_rate = 0.2
+selection_rate = 0.4
 # fitness penalties
 wall_penalty = 10
 backtrack_penalty = 10
+distance_penalty = 10
 
 class GeneticAlgo:
     def __init__(self, maze_size, pop_size, runner_length):
@@ -21,9 +22,11 @@ class GeneticAlgo:
             runner = Runner(self.maze, runner_length)
             self.population.append(runner)
 
-    def evolution(self):
-        rank = []
-        return rank
+    def evolve(self, generations):
+        for gen in range(generations):
+            self.selection(selection_rate)
+            self.reproduction()
+            print(f"Generation {gen+1} best fitness: {self.fitness(self.get_best_runner(), self.goal)}")
     
     def fitness(self, runner, goal):
         path = runner.get_path()
@@ -35,7 +38,7 @@ class GeneticAlgo:
         if distance == 0:
             res += 1000  # big reward for reaching the goal
         else:
-            res -= distance
+            res -= distance_penalty * distance
         # penalty for backtracking and for staying in place
         for i in range(1, len(path)):
             if path[i] < 0:

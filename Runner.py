@@ -51,6 +51,8 @@ class Runner:
                 self.last_cell = [new_x, new_y]
             else: # illegal move, stay in place
                 self.path[i] = -direction
+            if self.last_cell == list(self.maze.get_goal()):
+                break
 
     def get_last_cell(self):
         return self.last_cell
