@@ -1,58 +1,47 @@
 from Maze import Maze
 import random as rd
-import time
-
-
-rd.seed()
 
 class Runner:
-    def __init__(self, maze:Maze, length:int, path=None):
-        self.maze = maze
-        self.start = maze.get_start()
-        self.length = length
-        self.last_cell = list(self.start)
-        self.cardinal = {
-            0:[0, 1],
-            1: [-1, 1],
-            2: [-1, 0],
-            3: [-1, -1],
-            4:[0, -1],
-            5: [1, -1],
-            6:[1, 0],
-            7: [1, 1],
-        }
+    def __init__(self, start, runner_length):
+        self.start = start
+        self.dna = [rd.randint(0, 7) for i in range(runner_length)]
+        self.fitness = float('inf')
+        self.last_cell = start
         self.path = []
-        if not path:
-            self.generate()
-        else:
-            self.set_path(path)
+        self.reached_goal = False
 
-    def generate(self):
-        for i in range(self.length):
-            direction = rd.choice(list(self.cardinal.keys()))
-            move = self.cardinal[direction]
-            new_x = self.last_cell[0] + move[0]
-            new_y = self.last_cell[1] + move[1]
-            if self.maze.is_valid([new_x, new_y], move):
-                self.last_cell = [new_x, new_y]
+    def journey(self, maze):
+        current_x, current_y = self.start[0], self.start[1]
+        self.path = []
+        for direction in self.dna:
+            move = maze.get_cardinal()[direction]
+            if maze.is_valid((current_x, current_y), move):
+                current_x += move[0]
+                current_y += move[1]
                 self.path.append(direction)
-            else: # illegal move, stay in place
-                self.path.append(-direction)
-
-    def set_path(self, path):
-        self.path = path
-        self.last_cell = list(self.start)
-        for i in range(len(path)):
-            direction = abs(path[i])
-            move = self.cardinal[direction]
-            new_x = self.last_cell[0] + move[0]
-            new_y = self.last_cell[1] + move[1]
-            if self.maze.is_valid([new_x, new_y], move):
-                self.last_cell = [new_x, new_y]
-            else: # illegal move, stay in place
-                self.path[i] = -direction
-            if self.last_cell == list(self.maze.get_goal()):
+                self.last_cell = (current_x, current_y)
+            else:
+                self.path.append(-1) 
+            if (current_x, current_y) == maze.get_goal():
                 break
+
+    def mutate(self, mutation, index):
+        self.dna[index] = mutation
+
+    def set_fitness(self, fitness):
+        self.fitness = fitness
+    
+    def set_dna(self, dna):
+        self.dna = dna
+
+    def set_reached_goal(self, reached_goal):
+        self.reached_goal = reached_goal
+
+    def is_goal_reached(self):
+        return self.reached_goal
+
+    def get_fitness(self):
+        return self.fitness
 
     def get_last_cell(self):
         return self.last_cell
@@ -61,10 +50,13 @@ class Runner:
         return self.start
     
     def get_length(self):
-        return self.length
+        return len(self.genome)
     
     def get_path(self):
         return self.path
+    
+    def get_dna(self):
+        return self.dna
     
     def __str__(self):
         return str(self.path)

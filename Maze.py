@@ -115,6 +115,9 @@ class Maze:
     def change_color(self, x, y, color=[255, 255, 255]):
         self.maze[x][y] = color
 
+    def get_cardinal(self):
+        return self.cardinal
+    
     def get_size(self):
         return self.size
     
