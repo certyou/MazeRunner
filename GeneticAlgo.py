@@ -5,17 +5,18 @@ import math
 
 
 # parameters for maze
-MAZE_SIZE = 10
+MAZE_SIZE = 50
 # parameters for genetic algorithm
-POPULATION_SIZE = 100
+POPULATION_SIZE = 200
 MAX_GENERATIONS = 1000
-MUTATION_RATE = 0.2
+MUTATION_RATE = 0.1
 SELECTION_RATE = 0.4
-RUNNER_LENGTH = MAZE_SIZE * MAZE_SIZE
+RUNNER_LENGTH = MAZE_SIZE ** 2
 # fitness penalties
-WALL_PENALTY = 10
-BACKTRACK_PENALTY = 100
+WALL_PENALTY = 20
+BACKTRACK_PENALTY = 5
 DISTANCE_PENALTY = 10
+LENGTH_PENALTY = 1
 
 class GeneticAlgo:
     def __init__(self, maze, runner_length, pop_size=100, max_generations=1000, mutation_rate=0.1, selection_rate=0.5):
@@ -48,6 +49,7 @@ class GeneticAlgo:
         dist = math.sqrt((last_cell[0] - goal[0])**2 + (last_cell[1] - goal[1])**2)
         fitness += dist * DISTANCE_PENALTY
 
+        fitness += len(runner.get_path()) * LENGTH_PENALTY
         runner.set_fitness(fitness)
 
     def run_generation(self):
@@ -80,7 +82,7 @@ class GeneticAlgo:
         return child
 
     def mutation(self, runner):
-        for i in range(len(self.runner_length)):
+        for i in range(self.runner_length):
             if rd.random() < self.mutation_rate:
                 runner.mutate(rd.randint(0, 7), i)
 
@@ -96,10 +98,13 @@ if __name__ == "__main__":
     
     for i in range(MAX_GENERATIONS):
         best_runner = world.run_generation()
-        print(f"generation n°{i+1}: {best_runner.get_fitness()} fitness")
-        if best_runner.is_goal_reached():
-            print(f"a runner find the goal")
+        world.selection()
+        world.reproduction()
+        if (i+1) % 200 == 0:
+            print(f"generation n°{i+1}: {best_runner.get_fitness()} fitness")
+            maze.display_runner(best_runner)
+            print(best_runner.get_dna())
+            print(best_runner.get_path())
     
     if not best_runner.is_goal_reached():
-        print("goal not reached. best attempt:")
-    maze.display_runner(best_runner)
+        print("goal not reached.")

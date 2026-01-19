@@ -23,6 +23,7 @@ class Runner:
             else:
                 self.path.append(-1) 
             if (current_x, current_y) == maze.get_goal():
+                self.reached_goal = True
                 break
 
     def mutate(self, mutation, index):
