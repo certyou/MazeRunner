@@ -1,110 +1,234 @@
-from Maze import Maze
 from Runner import Runner
+import matplotlib.pyplot as plt
 import random as rd
 import math
 
 
-# parameters for maze
-MAZE_SIZE = 50
-# parameters for genetic algorithm
-POPULATION_SIZE = 200
-MAX_GENERATIONS = 1000
-MUTATION_RATE = 0.1
-SELECTION_RATE = 0.4
-RUNNER_LENGTH = MAZE_SIZE ** 2
 # fitness penalties
-WALL_PENALTY = 20
-BACKTRACK_PENALTY = 5
+WALL_PENALTY = 10
+BACKTRACK_PENALTY = 100
 DISTANCE_PENALTY = 10
 LENGTH_PENALTY = 1
+GOAL_REACHED_BONUS = -1000
 
 class GeneticAlgo:
-    def __init__(self, maze, runner_length, pop_size=100, max_generations=1000, mutation_rate=0.1, selection_rate=0.5):
+    """
+    Classe représentant un algorithme génétique.
+    """
+    def __init__(self, maze, runner_length:int, pop_size:int, max_generations:int, mutation_rate:float, selection_rate:float):
+        """ constructeur de GeneticAlgo
+        Args:
+            maze (Maze): labyrinthe utilisé
+            runner_length (int): longueur des runners
+            pop_size (int): taille de la population
+            max_generations (int): nombre maximum de générations
+            mutation_rate (float): taux de mutation
+            selection_rate (float): taux de sélection
+        """
         self.maze = maze
         self.pop_size = pop_size
         self.mutation_rate = mutation_rate
         self.selection_rate = selection_rate
         self.max_generations = max_generations
-        self.runner_length = runner_length
-        self.population = [Runner(maze.get_start(), self.runner_length) for i in range(pop_size)]
+        # initialise la population
+        self.population = [Runner(maze.get_start(), runner_length) for i in range(pop_size)]
 
-    def fitness(self, runner):
+        # pour les stats
+        self.best_fitness_history = []
+        self.fitness_avg_history = []
+        self.length_history = []
+
+    def fitness(self, runner:Runner):
+        """
+        calcule la fitness d'un runner (sa performance dans le labyrinthe)
+        Args:
+            runner (Runner): runner dont on veut calculer la fitness
+        """
+        # tout les runners commencent à 0
         fitness = 0
 
+        # penalités pour les murs et les retours en arrière (case déjà visitée)
         visited = set()
         current_x, current_y = runner.get_start()[0], runner.get_start()[1]
         visited.add((current_x, current_y))
         for move in runner.get_path():
-            if move == -1:
+            if move == -1: # mouvement dans un mur -> penalité du mur + penalité d'immobilité (mm case)
                 fitness += WALL_PENALTY
+                fitness += BACKTRACK_PENALTY
             else:
                 current_x, current_y = current_x + self.maze.get_cardinal()[move][0], current_y + self.maze.get_cardinal()[move][1]
+                # si la case a déjà été visitée -> penalité de retour en arrière
                 if (current_x, current_y) in visited:
                     fitness += BACKTRACK_PENALTY
                 else:
+                    # ajoute la case aux visitées
                     visited.add((current_x, current_y))
         
-        goal = self.maze.get_goal()
+        # derniere cell atteinte
         last_cell = runner.get_last_cell()
-        dist = math.sqrt((last_cell[0] - goal[0])**2 + (last_cell[1] - goal[1])**2)
+        # j'ai essayé avec la distance euclidienne mais ca marchait moins bien qu'avec les distances de dijkstra
+        # dist = math.sqrt((last_cell[0] - goal[0])**2 + (last_cell[1] - goal[1])**2)
+        dist = self.maze.get_dijkstra_distance(last_cell[0], last_cell[1])
         fitness += dist * DISTANCE_PENALTY
-
+        # longueur du chemin parcouru (on cherche le chemin le plus court)
         fitness += len(runner.get_path()) * LENGTH_PENALTY
+        # bonus si le but est atteint
+        if runner.is_goal_reached():
+            fitness += GOAL_REACHED_BONUS
+
         runner.set_fitness(fitness)
 
     def run_generation(self):
+        """
+        fait évoluer la population d'une génération
+        Returns:
+            Runner: le meilleur runner de la génération
+        """
+        # pour les stats (avg fitness et avg length de la gé,nération)
+        avg_fitness = 0
+        avg_length = 0
         for runner in self.population:
+            # fait parcourir le labyrinthe au runner (via l'ADN mais en prenant en compte les obstacles)
             runner.journey(self.maze)
             self.fitness(runner)
-        self.population.sort(key=lambda runner: runner.get_fitness())
-        if self.population[0].get_fitness() == 0:
-            self.population[0].set_reached_goal(True)
-            return self.population[0]
+            avg_fitness += runner.get_fitness()
+            avg_length += len(runner.get_path())
+        # pour les stats
+        avg_fitness /= self.pop_size
+        avg_length /= self.pop_size
+        self.fitness_avg_history.append(avg_fitness)
+        self.length_history.append(avg_length)
+        self.tri_population() # tri la population par fitness
+        self.best_fitness_history.append(self.population[0].get_fitness())
+        # renvoie le meilleur runner
         return self.population[0]
     
+    def evolution(self, resume_interval=100):
+        """
+        fait évoluer la population sur le nombre maximum de générations
+        Returns:
+            Runner: le meilleur runner de la dernière génération
+        """
+        for generation in range(self.max_generations):
+            best_runner = self.run_generation()
+            if generation % resume_interval == 0: # resume toutes les 100 générations
+                print(f"Generation {generation}: best = {best_runner.get_fitness()}, avg = {self.fitness_avg_history[-1]}, avg length = {self.length_history[-1]}")
+            self.selection() # sélection des meilleurs runners
+            self.reproduction() # reproduction pour remplir la population
+        return best_runner
+    
     def selection(self):
-        self.population.sort(key=lambda runner: runner.get_fitness())
+        """
+        sélectionne les meilleurs runners pour la reproduction
+        """
+        # garde les meilleurs selon le taux de sélection
         self.population = self.population[:round(self.pop_size*self.selection_rate)]
     
     def reproduction(self):
-        elite = self.population.copy()
+        """
+        fait la reproduction des runners
+        """
+        elite = self.population.copy() # copie des meilleurs pour la reproduction
+        #tant que la population n'est pas remplie
         while len(self.population) < self.pop_size:
+            # sélection aléatoire de deux parents parmi les meilleurs
             parent1 = rd.choice(elite)
             parent2 = rd.choice(elite)
-            child = self.crossover(parent1, parent2)
-            self.mutation(child)
+            child = self.crossover(parent1, parent2) # mix de l'ADN des parents
+            self.mutation(child) # chance pour que l'enfant mute
             self.population.append(child)
 
-    def crossover(self, parent1, parent2):
-        cut = rd.randint(1, self.runner_length - 1)
-        child = Runner(self.maze.get_start(), self.runner_length)
+    def crossover(self, parent1:Runner, parent2:Runner):
+        """
+        croisement de l'ADN de deux parents pour créer un enfant
+        Args:
+            parent1 (Runner): premier parent
+            parent2 (Runner): second parent
+        Returns:
+            Runner: l'enfant
+        """
+        # cut au hasard dans l'ADN des parents
+        min_len = min(parent1.get_length(), parent2.get_length()) # s'assure que l'index de cut est valide pour les deux parents (taille varie)
+        cut = rd.randint(1, min_len - 1)
+        child = Runner(self.maze.get_start(), len(parent1.get_dna()))
         child.set_dna(parent1.get_dna()[:cut] + parent2.get_dna()[cut:])
         return child
 
     def mutation(self, runner):
-        for i in range(self.runner_length):
+        """
+        mutation de l'ADN d'un runner
+        Args:
+            runner (Runner): runner à muter
+        """
+        for i in range(runner.get_length()):
             if rd.random() < self.mutation_rate:
                 runner.mutate(rd.randint(0, 7), i)
 
+    def tri_population(self):
+        """
+        trie la population par fitness dans l'ordre décroissant
+        """
+        n = len(self.population)
+        for i in range(n):
+            for j in range(i):
+                if self.population[j].get_fitness() > self.population[i].get_fitness():
+                    self.population[j], self.population[i] = self.population[i], self.population[j]
 
-if __name__ == "__main__":
-    maze = Maze(MAZE_SIZE)
-    maze.generate()
-    maze.solve_from_random_coordonnates()
-    print(f"Départ: {maze.get_start()} -> Objectif: {maze.get_goal()}")
 
-    world = GeneticAlgo(maze, RUNNER_LENGTH, POPULATION_SIZE, MAX_GENERATIONS, MUTATION_RATE, SELECTION_RATE)    
-    best_runner = None
+    def get_best_runner(self):
+        """
+        renvoie le meilleur runner de la dernière génération
+
+        Returns:
+            Runner: meilleur runner de la dernière génération
+        """
+        return self.population[0]
+
+    def get_fitness_history(self):
+        """
+        renvoie l'historique des fitness
+
+        Returns:
+            list: historique des fitness
+        """
+        return self.fitness_history
     
-    for i in range(MAX_GENERATIONS):
-        best_runner = world.run_generation()
-        world.selection()
-        world.reproduction()
-        if (i+1) % 200 == 0:
-            print(f"generation n°{i+1}: {best_runner.get_fitness()} fitness")
-            maze.display_runner(best_runner)
-            print(best_runner.get_dna())
-            print(best_runner.get_path())
+    def get_fitness_avg(self):
+        """
+        renvoie l'historique de la moyenne des fitness
+
+        Returns:
+            list: historique de la moyenne des fitness
+        """
+        return self.fitness_avg_history
     
-    if not best_runner.is_goal_reached():
-        print("goal not reached.")
+    def get_length_history(self):
+        """
+        renvoie l'historique de la longueur moyenne des runners
+
+        Returns:
+            list: historique de la longueur moyenne des runners
+        """
+        return self.length_history
+
+    def plot_stats(self):
+        """
+        affiche les statistiques de l'évolution (fitness et longueur moyenne des runners)
+        """
+        # affiche les finess en fonction des générations
+        plt.plot(self.best_fitness_history, label='best fitness')
+        plt.plot(self.fitness_avg_history, label='average fitness')
+        plt.xlabel('generations')
+        plt.ylabel('fitness')
+        plt.title('fitness au fil des generations')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+        # affiche la longueur moyenne des runners en fonction des générations
+        plt.plot(self.length_history, label='average runner length', color='orange')
+        plt.xlabel('generations')
+        plt.ylabel('length')
+        plt.title('longueur moyenne des runners au fil des generations')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
