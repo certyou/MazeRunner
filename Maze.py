@@ -177,24 +177,31 @@ class Maze:
         # la cellule est éligible si elle a exactement un voisin non mur
         return cpt == 1
     
+    def is_dead_end(self, x:int, y:int):
+        """
+        vérifie si la cellule est une impasse (possède au plus un voisin non mur)
+        Args:
+            x (int): coordonnées en x
+            y (int): coordonnées en y
+        Returns:
+            bool: True si la cellule est une impasse, False sinon
+        """
+        cpt = 0
+        for direction in self.cardinal:
+            i = x+self.cardinal[direction][0]
+            j = y+self.cardinal[direction][1]
+            # tant qu'on est dans le labyrinthe
+            if (i>=0 and i<self.size) and (j>=0 and j<self.size):
+                if self.maze[i][j][0] == 255:
+                    cpt += 1
+            if (i, j) == self.start or (i, j) == self.goal:
+                return False
+        return cpt <= 1
+    
     def set_pheromone(self, x, y):
         if (x, y) != self.start and (x, y) != self.goal:
             self.map[x][y] = -1
             self.change_color(x, y, [100, 100, 100]) 
-
-    def is_dead_end(self, x, y):
-        if self.map[x][y] == -1:
-            return False
-        if (x, y) == self.start or (x, y) == self.goal:
-            return False
-        free_neighbors = 0
-        for direction in self.cardinal:
-            dx, dy = self.cardinal[direction]
-            nx, ny = x + dx, y + dy
-            if 0 <= nx < self.size and 0 <= ny < self.size:
-                if self.map[nx][ny] != -1:
-                    free_neighbors += 1
-        return free_neighbors <= 1
     
     def change_color(self, x:int, y:int, color:list=[255, 255, 255]):
         """

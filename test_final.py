@@ -98,7 +98,7 @@ def main():
     # 1. Configuration
     MAZE_SIZE = 20          # Taille raisonnable pour tester rapidement
     RUNNER_LENGTH = MAZE_SIZE * MAZE_SIZE   # Assez de mouvements pour explorer
-    POP_SIZE = 200
+    POP_SIZE = 600
     MAX_GEN = 500
     MUTATION_RATE = 0.1
     SELECTION_RATE = 0.5

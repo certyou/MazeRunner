@@ -33,13 +33,13 @@ class GeneticAlgo:
         self.max_generations = max_generations
         # initialise la population
         self.population = [Runner(maze.get_start(), runner_length) for i in range(pop_size)]
+        self.explorated = set() # enregistre les cellules explorées pour les pheromones
 
         # pour les stats
         self.best_fitness_history = []
         self.fitness_avg_history = []
         self.length_history = []
 
-        self.pruned_cells_count = 0
 
     def fitness(self, runner:Runner):
         """
@@ -81,6 +81,7 @@ class GeneticAlgo:
             fitness += GOAL_REACHED_BONUS
 
         runner.set_fitness(fitness)
+        self.explorated = self.explorated.union(visited)
 
     def run_generation(self):
         """
@@ -115,7 +116,7 @@ class GeneticAlgo:
         """
         for generation in range(self.max_generations):
             best_runner = self.run_generation()
-            if generation % resume_interval == 0: # resume toutes les 100 générations
+            if (generation+1) % resume_interval == 0: # resume toutes les 100 générations
                 print(f"Generation {generation}: best = {best_runner.get_fitness()}, avg = {self.fitness_avg_history[-1]}, avg length = {self.length_history[-1]}")
             self.selection() # sélection des meilleurs runners
             self.reproduction() # reproduction pour remplir la population
@@ -154,8 +155,6 @@ class GeneticAlgo:
         """
         # cut au hasard dans l'ADN des parents
         dna_len = len(parent1.get_dna())
-        if dna_len < 2: # Can't crossover if DNA is too short
-            return Runner(self.maze.get_start(), dna_len)
         cut = rd.randint(1, dna_len - 1)
         child = Runner(self.maze.get_start(), dna_len)
         child.set_dna(parent1.get_dna()[:cut] + parent2.get_dna()[cut:])
@@ -183,21 +182,12 @@ class GeneticAlgo:
 
     def apply_pheromones(self):
         """
-        Détecte les impasses dans le labyrinthe et les bouche (phéromones).
-        Selon le document : "couper la branche du labyrinthe comme si on réintroduisait un mur"
-        """
-        changes = False
-        size = self.maze.get_size()
-        
-        # On scanne tout le labyrinthe pour trouver les culs-de-sac
-        # Note: On pourrait optimiser en ne scannant que les zones visitées par les runners
-        for x in range(size):
-            for y in range(size):
-                if self.maze.is_dead_end(x, y):
-                    self.maze.set_pheromone(x, y)
-                    self.pruned_cells_count += 1
-                    changes = True
-
+        Dépose des phéromones sur les impasses découvertes par les runners
+        """            
+        for x, y in self.explorated:
+            # Si c'est une impasse
+            if self.maze.is_dead_end(x, y):
+                self.maze.set_pheromone(x, y) # On bouche la case
 
     def get_best_runner(self):
         """
