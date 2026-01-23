@@ -199,6 +199,12 @@ class Maze:
         return cpt <= 1
     
     def set_pheromone(self, x, y):
+        """
+        bouche une cellule en la transformant en mur
+        Args:
+            x (int): coordonnées en x
+            y (int): coordonnées en y
+        """
         if (x, y) != self.start and (x, y) != self.goal:
             self.map[x][y] = -1
             self.change_color(x, y, [100, 100, 100]) 

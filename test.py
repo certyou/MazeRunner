@@ -17,22 +17,17 @@ test2.generate()
 test2.solve_from_random_coordonnates()
 test2.display_soluce()"""
 
-"""abscisse = [8, 16, 32, 64, 128, 256, 512]
+abscisse = [8, 16, 32, 64, 128, 256, 512]
 ordonnee = []
 for k in abscisse:
     start = time.time()
-    test = UglyMaze(k)
+    test = Maze(k)
     test.generate()
     test.dijkstra()
     test.solve(k-1,k-1)
     stop = time.time()-start
-    ordonnee.append(stop)
+    start = test.get_start()
+    l = test.get_dijkstra_distance(start[0], start[1])
+    ordonnee.append(l)
 plt.plot(abscisse, ordonnee, 'ro')
-plt.show()"""
-
-gen = GeneticAlgo(maze_size=10, pop_size=100, runner_length=20)
-gen.evolve(generations=50000)
-best_runner = gen.get_best_runner()
-print("Best runner path:", best_runner.get_path())
-gen.maze.display_runner(best_runner)
-gen.maze.display_soluce()
+plt.show()

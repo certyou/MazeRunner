@@ -91,15 +91,13 @@ def display_and_save_stats(ga):
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.savefig('statistics.png')
     plt.close(fig) # Ferme la figure pour libérer la mémoire
-    print("Statistiques de l'évolution sauvegardées dans 'statistics.png'")
-
 
 def main():
     # 1. Configuration
-    MAZE_SIZE = 20          # Taille raisonnable pour tester rapidement
-    RUNNER_LENGTH = MAZE_SIZE * MAZE_SIZE   # Assez de mouvements pour explorer
-    POP_SIZE = 600
-    MAX_GEN = 500
+    MAZE_SIZE = 100 
+    RUNNER_LENGTH = MAZE_SIZE * MAZE_SIZE
+    POP_SIZE = 200
+    MAX_GEN = 5000
     MUTATION_RATE = 0.1
     SELECTION_RATE = 0.5
 
@@ -108,25 +106,15 @@ def main():
     maze.generate()
     maze.solve_from_random_coordonnates()
     print(f"Départ: {maze.get_start()} -> Objectif: {maze.get_goal()}")
-
-    # Sauvegarder la carte Dijkstra originale avant l'évolution génétique
     original_dijkstra_map = np.copy(maze.map)
-
     print("\n--- Lancement de l'Algorithme Génétique ---")
     ga = GeneticAlgo(maze, RUNNER_LENGTH, POP_SIZE, MAX_GEN, MUTATION_RATE, SELECTION_RATE)
-    
     start_time = time.time()
     best_runner = ga.evolution(resume_interval=100)
     duration = time.time() - start_time
-    
     print(f"\nTemps d'exécution : {duration:.2f} secondes")
-    print(f"Meilleure fitness finale : {best_runner.get_fitness()}")
     print(f"Le meilleur runner a atteint le but: {'Oui' if best_runner.is_goal_reached() else 'Non'}")
-     
-    # Afficher et sauvegarder les visualisations en utilisant la carte Dijkstra originale
     display_and_save_mazes(maze, best_runner, original_dijkstra_map)
-    
-    # Afficher et sauvegarder les statistiques
     display_and_save_stats(ga)
 
 if __name__ == "__main__":
