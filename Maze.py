@@ -175,6 +175,25 @@ class Maze:
         # la cellule est éligible si elle a exactement un voisin non mur
         return cpt == 1
     
+    def set_pheromone(self, x, y):
+        if (x, y) != self.start and (x, y) != self.goal:
+            self.map[x][y] = -1
+            self.change_color(x, y, [100, 100, 100]) 
+
+    def is_dead_end(self, x, y):
+        if self.map[x][y] == -1:
+            return False
+        if (x, y) == self.start or (x, y) == self.goal:
+            return False
+        free_neighbors = 0
+        for direction in self.cardinal:
+            dx, dy = self.cardinal[direction]
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < self.size and 0 <= ny < self.size:
+                if self.map[nx][ny] != -1:
+                    free_neighbors += 1
+        return free_neighbors <= 1
+    
     def change_color(self, x:int, y:int, color:list=[255, 255, 255]):
         """
         change la couleur d'une cellule avec la couleur donnée

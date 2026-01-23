@@ -7,7 +7,7 @@ def main():
     MAZE_SIZE = 20          # Taille raisonnable pour tester rapidement
     RUNNER_LENGTH = MAZE_SIZE * MAZE_SIZE * 2  # Assez de mouvements pour atteindre le but
     POP_SIZE = 200
-    MAX_GEN = 1000
+    MAX_GEN = 500
     MUTATION_RATE = 0.1    # 5% de chance de mutation
     SELECTION_RATE = 0.2    # On garde les 30% meilleurs parents
 
@@ -25,15 +25,12 @@ def main():
     ga = GeneticAlgo(maze, RUNNER_LENGTH, POP_SIZE, MAX_GEN, MUTATION_RATE, SELECTION_RATE)
     
     start_time = time.time()
-    best_runner = ga.evolution(resume_interval=10)
+    best_runner = ga.evolution(resume_interval=100)
 
     duration = time.time() - start_time
     print(f"\nTemps d'exécution : {duration:.2f} secondes")
     print(f"Meilleure fitness finale : {best_runner.get_fitness()}")
-
-    # 2. Visualisation des résultats
-    print("Affichage de la solution et de la courbe de convergence...")
-    
+     
     # Afficher le chemin du meilleur runner sur le labyrinthe
     maze.display_runner(best_runner)
     

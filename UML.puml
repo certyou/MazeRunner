@@ -1,0 +1,74 @@
+@startuml Algo
+
+class Runner {
+    -tuple start
+    -list dna
+    -list path
+    -float fitness
+    -tuple last_cell
+    -bool reached_goal
+    +__init__(start: tuple, runner_length: int)
+    +journey(maze: Maze)
+    +mutate(mutation: int, index: int)
+    +is_goal_reached() : bool
+    +get_fitness() : float
+    +get_dna() : list
+    +get_path() : list
+    +set_fitness(fitness: int)
+    +set_dna(dna: list)
+}
+
+class GeneticAlgo {
+    -Maze maze
+    -int pop_size
+    -float mutation_rate
+    -float selection_rate
+    -int max_generations
+    -list~Runner~ population
+    -list best_fitness_history
+    +__init__(maze: Maze, runner_length: int, pop_size: int, ...)
+    +evolution(resume_interval: int) : Runner
+    +run_generation() : Runner
+    +fitness(runner: Runner)
+    +selection()
+    +reproduction()
+    +crossover(parent1: Runner, parent2: Runner) : Runner
+    +mutation(runner: Runner)
+    +tri_population()
+    +plot_stats()
+}
+
+class Pile {
+    -int size
+    -list elem
+    +__init__()
+    +add(item)
+    +depile() : item
+    +get_size() : int
+}
+
+class Maze {
+    -int size
+    -Pile pile
+    -ndarray maze
+    -ndarray map
+    -tuple start
+    -tuple goal
+    -dict cardinal
+    +__init__(n: int)
+    +generate()
+    +solve_from_random_coordonnates()
+    +solve(x: int, y: int)
+    +dijkstra()
+    +is_valid(position: tuple, move: tuple) : bool
+    +get_dijkstra_distance(x: int, y: int) : int
+    +display_runner(runner: Runner)
+    +check_neighbours(x: int, y: int)
+}
+
+Maze "1" *-- "1" Pile
+GeneticAlgo "1" --> "1" Maze
+GeneticAlgo "1" o-- "0..*" Runner
+Runner ..> Maze
+
+@enduml

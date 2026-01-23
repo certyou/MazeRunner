@@ -4,12 +4,13 @@ import random as rd
 import math
 
 
-# fitness penalties
+# fitness penalties and reward
 WALL_PENALTY = 10
-BACKTRACK_PENALTY = 100
-DISTANCE_PENALTY = 10
+BACKTRACK_PENALTY = 10
+DISTANCE_PENALTY = 3
 LENGTH_PENALTY = 1
-GOAL_REACHED_BONUS = -1000
+GOAL_REACHED_BONUS = -100
+DISCOVERY_BONUS = -2
 
 class GeneticAlgo:
     """
@@ -38,6 +39,8 @@ class GeneticAlgo:
         self.fitness_avg_history = []
         self.length_history = []
 
+        self.pruned_cells_count = 0
+
     def fitness(self, runner:Runner):
         """
         calcule la fitness d'un runner (sa performance dans le labyrinthe)
@@ -62,12 +65,13 @@ class GeneticAlgo:
                     fitness += BACKTRACK_PENALTY
                 else:
                     # ajoute la case aux visitées
+                    fitness += DISCOVERY_BONUS
                     visited.add((current_x, current_y))
         
         # derniere cell atteinte
         last_cell = runner.get_last_cell()
-        # j'ai essayé avec la distance euclidienne mais ca marchait moins bien qu'avec les distances de dijkstra
-        # dist = math.sqrt((last_cell[0] - goal[0])**2 + (last_cell[1] - goal[1])**2)
+        # j'ai essayé avec la distance euclidienne mais ca marchait (bcp) moins bien qu'avec les distances de dijkstra
+        # dist = math.sqrt((last_cell[0] - self.maze.get_goal()[0])**2 + (last_cell[1] - self.maze.get_goal()[1])**2)
         dist = self.maze.get_dijkstra_distance(last_cell[0], last_cell[1])
         fitness += dist * DISTANCE_PENALTY
         # longueur du chemin parcouru (on cherche le chemin le plus court)
@@ -128,6 +132,7 @@ class GeneticAlgo:
         """
         fait la reproduction des runners
         """
+        self.apply_pheromones()
         elite = self.population.copy() # copie des meilleurs pour la reproduction
         #tant que la population n'est pas remplie
         while len(self.population) < self.pop_size:
@@ -148,7 +153,7 @@ class GeneticAlgo:
             Runner: l'enfant
         """
         # cut au hasard dans l'ADN des parents
-        min_len = min(parent1.get_length(), parent2.get_length()) # s'assure que l'index de cut est valide pour les deux parents (taille varie)
+        min_len = min(parent1.get_length(), parent2.get_length()) # s'assure que l'index de cut est valide pour les deux parents (taille qui peut varier)
         cut = rd.randint(1, min_len - 1)
         child = Runner(self.maze.get_start(), len(parent1.get_dna()))
         child.set_dna(parent1.get_dna()[:cut] + parent2.get_dna()[cut:])
@@ -173,6 +178,23 @@ class GeneticAlgo:
             for j in range(i):
                 if self.population[j].get_fitness() > self.population[i].get_fitness():
                     self.population[j], self.population[i] = self.population[i], self.population[j]
+
+    def apply_pheromones(self):
+        """
+        Détecte les impasses dans le labyrinthe et les bouche (phéromones).
+        Selon le document : "couper la branche du labyrinthe comme si on réintroduisait un mur"
+        """
+        changes = False
+        size = self.maze.get_size()
+        
+        # On scanne tout le labyrinthe pour trouver les culs-de-sac
+        # Note: On pourrait optimiser en ne scannant que les zones visitées par les runners
+        for x in range(size):
+            for y in range(size):
+                if self.maze.is_dead_end(x, y):
+                    self.maze.set_pheromone(x, y)
+                    self.pruned_cells_count += 1
+                    changes = True
 
 
     def get_best_runner(self):

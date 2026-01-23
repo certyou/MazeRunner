@@ -6,6 +6,13 @@ class Runner:
     Classe représentant un individu tentant de résoudre le labyrinthe.
     """
     def __init__(self, start:tuple, runner_length:int):
+        """constructeur de runner
+        initialise une suite d'adn aléatoire
+
+        Args:
+            start (tuple): _description_
+            runner_length (int): _description_
+        """
         self.start = start
         # ici je fais la différence entre l'ADN du runner (self.dna) et le chemin réellement parcouru (self.path)
         # le but étant de pouvoir tracer le chemin réellement parcouru dans le labyrinthe sans compromettre l'ADN
