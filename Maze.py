@@ -22,6 +22,7 @@ class Maze:
         self.size = n
         self.pile = Pile()
         self.maze = np.zeros((n, n, 3), dtype=np.uint8) # matrice représentant le labyrinthe (au depart que des murs)
+        self.empty_maze = None
         self.map = np.full((self.size, self.size), self.size**2, dtype=np.int64) # matrice des distances Dijkstra
         self.cardinal = {
             0: [0, 1],
@@ -131,6 +132,7 @@ class Maze:
                 self.change_color(next_cell[0], next_cell[1]) # on la marque comme chemin
             else: # sinon on dépile
                 next_cell = self.pile.depile()
+        self.empty_maze = self.maze.copy()
 
     def check_neighbours(self, x:int, y:int):
         """
@@ -283,6 +285,13 @@ class Maze:
         plt.matshow(self.map)
         plt.show()
 
+    def display_maze(self):
+        """
+        affiche le labyrinthe
+        """
+        img = Image.fromarray(self.maze)
+        img.show()
+
     def display_runner(self, runner):
         """
         affiche le labyrinthe avec le runner (en vert)
@@ -304,3 +313,11 @@ class Maze:
         runner_on_maze[self.start[0]][self.start[1]] = [0,0,255]
         img = Image.fromarray(runner_on_maze)
         img.show()
+
+    def display_all(self):
+        """
+        affihe tous les labyrinthes 
+        """
+        self.display_maze()
+        self.display_map()
+        self.display_soluce()

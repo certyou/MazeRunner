@@ -43,9 +43,8 @@ class Runner:
                 # sinon, on reste sur place et on ajoute -1 au chemin parcouru
                 self.path.append(-1) 
             if (current_x, current_y) == maze.get_goal():
-                # si le but est atteint, on arrête le parcours et on ajuste l'ADN
+                # si le but est atteint, on arrête le parcours
                 self.reached_goal = True
-                self.dna = self.dna[:len(self.path)]
                 break
 
     def mutate(self, mutation:int, index:int):

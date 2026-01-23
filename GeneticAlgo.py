@@ -153,9 +153,11 @@ class GeneticAlgo:
             Runner: l'enfant
         """
         # cut au hasard dans l'ADN des parents
-        min_len = min(parent1.get_length(), parent2.get_length()) # s'assure que l'index de cut est valide pour les deux parents (taille qui peut varier)
-        cut = rd.randint(1, min_len - 1)
-        child = Runner(self.maze.get_start(), len(parent1.get_dna()))
+        dna_len = len(parent1.get_dna())
+        if dna_len < 2: # Can't crossover if DNA is too short
+            return Runner(self.maze.get_start(), dna_len)
+        cut = rd.randint(1, dna_len - 1)
+        child = Runner(self.maze.get_start(), dna_len)
         child.set_dna(parent1.get_dna()[:cut] + parent2.get_dna()[cut:])
         return child
 
@@ -165,7 +167,7 @@ class GeneticAlgo:
         Args:
             runner (Runner): runner à muter
         """
-        for i in range(runner.get_length()):
+        for i in range(len(runner.get_dna())):
             if rd.random() < self.mutation_rate:
                 runner.mutate(rd.randint(0, 7), i)
 
