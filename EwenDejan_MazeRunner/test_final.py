@@ -12,12 +12,14 @@ def display_and_save_mazes(maze, best_runner=None, original_dijkstra_map=None):
     fig.suptitle('Labyrinthes')
     d_map = original_dijkstra_map
 
+    # labyrinthe de base
     ax = axs[0, 0]
     ax.imshow(maze.empty_maze)
     ax.set_title('labyrinthe de base')
     ax.set_xticks([])
     ax.set_yticks([])
 
+    # solution optimale
     ax = axs[0, 1]
     maze_sol = maze.empty_maze.copy()
     m_temp = Maze(maze.size)
@@ -31,25 +33,27 @@ def display_and_save_mazes(maze, best_runner=None, original_dijkstra_map=None):
     ax.set_xticks([])
     ax.set_yticks([])
 
+    # runner génétique
     ax = axs[1, 0]
     runner_on_maze = maze.maze.copy()
     cell = list(best_runner.get_start())
     path = best_runner.get_path()
     for direction in path:
-        if direction >= 0:
+        if direction >= 0: # mouvement valide
             move = maze.cardinal[direction]
             next_x, next_y = cell[0] + move[0], cell[1] + move[1]
-            if 0 <= next_x < maze.size and 0 <= next_y < maze.size:
-                runner_on_maze[cell[0]][cell[1]] = [0, 255, 0]
+            if 0 <= next_x < maze.size and 0 <= next_y < maze.size: # dans le labyrinthe
+                runner_on_maze[cell[0]][cell[1]] = [0, 255, 0] # marque le chemin du runner en vert
                 cell[0], cell[1] = next_x, next_y        
-    runner_on_maze[cell[0]][cell[1]] = [0, 255, 0]
-    runner_on_maze[maze.goal[0]][maze.goal[1]] = [255, 0, 0]
-    runner_on_maze[maze.start[0]][maze.start[1]] = [0, 0, 255]
+    runner_on_maze[cell[0]][cell[1]] = [0, 255, 0] # marque la dernière position du runner
+    runner_on_maze[maze.goal[0]][maze.goal[1]] = [255, 0, 0] # but en rouge
+    runner_on_maze[maze.start[0]][maze.start[1]] = [0, 0, 255] # départ en bleu
     ax.imshow(runner_on_maze)
     ax.set_title('genetic')
     ax.set_xticks([])
     ax.set_yticks([])
 
+    # carte des distances de dijkstra
     ax = axs[1, 1]
     d_map_masked = np.ma.masked_where(d_map == -1, d_map)
     cmap = plt.cm.viridis
@@ -90,10 +94,10 @@ def display_and_save_stats(ga):
 
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.savefig('statistics.png')
-    plt.close(fig) # Ferme la figure pour libérer la mémoire
+    plt.close(fig)
 
 def main():
-    # 1. Configuration
+    # Configuration
     MAZE_SIZE = 100 
     RUNNER_LENGTH = MAZE_SIZE * MAZE_SIZE
     POP_SIZE = 200
@@ -101,19 +105,17 @@ def main():
     MUTATION_RATE = 0.1
     SELECTION_RATE = 0.5
 
-    print("--- Génération du Labyrinthe ---")
     maze = Maze(MAZE_SIZE)
     maze.generate()
     maze.solve_from_random_coordonnates()
-    print(f"Départ: {maze.get_start()} -> Objectif: {maze.get_goal()}")
     original_dijkstra_map = np.copy(maze.map)
-    print("\n--- Lancement de l'Algorithme Génétique ---")
+    print("\n--- lancement des générations ---")
     ga = GeneticAlgo(maze, RUNNER_LENGTH, POP_SIZE, MAX_GEN, MUTATION_RATE, SELECTION_RATE)
     start_time = time.time()
     best_runner = ga.evolution(resume_interval=100)
     duration = time.time() - start_time
     print(f"\nTemps d'exécution : {duration:.2f} secondes")
-    print(f"Le meilleur runner a atteint le but: {'Oui' if best_runner.is_goal_reached() else 'Non'}")
+    print(f"goal reached: {best_runner.is_goal_reached()}")
     display_and_save_mazes(maze, best_runner, original_dijkstra_map)
     display_and_save_stats(ga)
 
